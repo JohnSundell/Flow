@@ -155,15 +155,15 @@ You might end up writing slightly more code when using Flow, but since each oper
 
 ## API reference
 
-### `FlowOperation`
+**`FlowOperation`**
 Used to declare operations that take an `Input` and produce an `Output` by calling a completion handler.
 
-### `FlowOperationChain`
+**`FlowOperationChain`**
 Used to create logical chains of operations, that execute sequentially. The input of an operation in the chain is the output of the previous operation.
 
 Create a chain with `FlowOperationChain(rootOperation:)` and then use `append()` to add additional operations to the chain. Finally, call `performWithInput()` to execute the chain.
 
-### `FlowClosureOperation`
+**`FlowClosureOperation`**
 An implementation of `FlowOperation` which enables you to create simple operations using a closure.
 
 ## Hope you enjoy using Flow!
