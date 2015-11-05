@@ -151,7 +151,11 @@ Since each operation takes a single input - and produces a single output - it’
 Since an operation can’t make assumptions about what context it’s being used it, the code you write will automatically be very easy to reuse.
 
 ### Reduced complexity
-You might end up writing slightly more code when using Flow, but since each operation has a single purpose and area or responsibility within your app, they will probably end up reducing the complexity of your code base. No more 1000+ line view controllers. And with reduced complexity comes easier debugging, and several other benefits.
+You might end up writing slightly more code (or at least, have more classes) when using Flow, but since each operation has a single purpose and area of responsibility within your app, the net result will be a less complicated code base.
+
+No more 1000+ line view controllers.
+
+And with reduced complexity comes easier debugging, and several other benefits.
 
 ## API reference
 
