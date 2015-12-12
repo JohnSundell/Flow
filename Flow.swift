@@ -73,7 +73,7 @@ public class FlowClosureOperation<I, O>: FlowOperation {
  *  A chain is a queue of operations that execute serially on the application's main queue.
  *  To create a chain, initialize an instance of `FlowOperationChain` with a root operation.
  */
-public protocol FlowOperationChainAPI: class {
+public protocol FlowOperationChainAPI: class, FlowOperation {
     /// The type of the chain's root operation
     typealias RootOperationType: FlowOperation
     /// The type of the operation currently located at the end of the chain
@@ -124,6 +124,10 @@ public class FlowOperationChain<T: FlowOperation>: FlowOperationChainAPI {
     public func performWithInput(input: T.Input, completionHandler: (T.Output -> Void)? = nil) {
         self._performWithInput(input, completionHandler: completionHandler)
     }
+    
+    public func performWithInput(input: T.Input, completionHandler: T.Output -> Void) {
+        self._performWithInput(input, completionHandler: completionHandler)
+    }
 }
 
 /**
@@ -153,6 +157,10 @@ public class FlowOperationChainLink<R: FlowOperation, C: FlowOperation>: FlowOpe
     }
     
     public func performWithInput(input: R.Input, completionHandler: (C.Output -> Void)? = nil) {
+        self._performWithInput(input, completionHandler: completionHandler)
+    }
+    
+    public func performWithInput(input: R.Input, completionHandler: C.Output -> Void) {
         self._performWithInput(input, completionHandler: completionHandler)
     }
 }
