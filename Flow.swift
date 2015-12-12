@@ -90,6 +90,16 @@ public protocol FlowOperationChainAPI: class, FlowOperation {
     func append<O: FlowOperation where O.Input == CurrentOperationType.Output>(operation: O) -> FlowOperationChainLink<RootOperationType, O>
     
     /**
+     *  Append a closure operation to the chain
+     *
+     *  @param closure The closure that forms the operation. It must accept an input that is of
+     *         the same type as the previous operation's output.
+     *
+     *  @return A new operation chain that includes the appended operation
+     */
+    func appendClosure<O>(closure: CurrentOperationType.Output -> O) -> FlowOperationChainLink<RootOperationType, FlowClosureOperation<CurrentOperationType.Output, O>>
+    
+    /**
      *  Perform all operations in the chain in sequential order
      *
      *  @param input The input to use to perform the first operation of the chain
@@ -98,6 +108,13 @@ public protocol FlowOperationChainAPI: class, FlowOperation {
      *         main queue and be passed any output that the last operation produced.
      */
     func performWithInput(input: RootOperationType.Input, completionHandler: (CurrentOperationType.Output -> Void)?)
+}
+
+/// Default implementations for FlowOperationChainAPI
+public extension FlowOperationChainAPI {
+    func appendClosure<O>(closure: CurrentOperationType.Output -> O) -> FlowOperationChainLink<RootOperationType, FlowClosureOperation<CurrentOperationType.Output, O>> {
+        return self.append(FlowClosureOperation(closure: closure))
+    }
 }
 
 /**
