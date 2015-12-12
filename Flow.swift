@@ -58,7 +58,7 @@ public protocol FlowOperation {
 public class FlowClosureOperation<I, O>: FlowOperation {
     private let closure: I -> O
     
-    init(closure: I -> O) {
+    public init(closure: I -> O) {
         self.closure = closure
     }
     
