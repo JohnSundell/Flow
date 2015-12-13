@@ -58,6 +58,48 @@ class FlowTests: XCTestCase {
         
         XCTAssertNil(actualOutput)
     }
+    
+    func testPredicateOperation() {
+        let predicateOperation = FlowPredicateOperation(predicate: "Flow", operation: FlowClosureOperation(closure: {
+            return $0 + " Operation"
+        }))
+        
+        var completionHandlerInvoked = false
+        
+        predicateOperation.performWithInput("Not flow", completionHandler: {
+            XCTAssertEqual("Not flow", $0)
+            completionHandlerInvoked = true
+        })
+        
+        XCTAssertTrue(completionHandlerInvoked)
+        completionHandlerInvoked = false
+        
+        predicateOperation.performWithInput("Flow", completionHandler: {
+            XCTAssertEqual("Flow Operation", $0)
+            completionHandlerInvoked = true
+        })
+        
+        XCTAssertTrue(completionHandlerInvoked)
+    }
+    
+    func testPredicateOperationDiscardingNonMatchingOutput() {
+        let predicateOperation = FlowPredicateOperation(predicate: 5, operation: FlowClosureOperation(closure: {
+            return "Flow " + String($0)
+        }))
+        
+        var closureOperationInvoked = false
+        
+        StringLengthOperation()
+            .toChain()
+            .append(predicateOperation)
+            .append(FlowClosureOperation(closure: {
+                XCTAssertEqual($0, 5)
+                closureOperationInvoked = true
+            }))
+            .performWithInput("Hello")
+        
+        XCTAssertTrue(closureOperationInvoked)
+    }
 }
 
 // MARK: - Operations

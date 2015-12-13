@@ -76,6 +76,32 @@ public class FlowClosureOperation<I, O>: FlowOperation {
 }
 
 /**
+ *  Operation that only executes if a certain predicate matches its input
+ *
+ *  Only compatible with Equatable inputs. If its output (defined by the operation it wraps)
+ *  isn't of the same type as its input, any produced output is discarded.
+ */
+public class FlowPredicateOperation<T: FlowOperation where T.Input: Equatable>: FlowOperation {
+    private let predicate: Void -> T.Input
+    private let operation: T
+    
+    public init(@autoclosure(escaping) predicate: Void -> T.Input, operation: T) {
+        self.predicate = predicate
+        self.operation = operation
+    }
+    
+    public func performWithInput(input: T.Input, completionHandler: T.Input -> Void) {
+        if self.predicate() != input {
+            return completionHandler(input)
+        }
+        
+        self.operation.performWithInput(input, completionHandler: {
+            completionHandler(($0 as? T.Input) ?? input)
+        })
+    }
+}
+
+/**
  *  Protocol defining the public API of a chain of operations
  *
  *  A chain is a queue of operations that execute serially on the application's main queue.
