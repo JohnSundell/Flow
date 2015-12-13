@@ -101,6 +101,15 @@ public class FlowPredicateOperation<T: FlowOperation where T.Input: Equatable>: 
     }
 }
 
+/// Operation that can be used to clear the current type of an operation chain, producing Void
+public class FlowClearOperation<I>: FlowOperation {
+    public init() { }
+
+    public func performWithInput(input: I, completionHandler: Void -> Void) {
+        completionHandler()
+    }
+}
+
 /**
  *  Protocol defining the public API of a chain of operations
  *
@@ -148,6 +157,11 @@ public protocol FlowOperationChainAPI: class, FlowOperation {
 public extension FlowOperationChainAPI {
     func appendClosure<O>(closure: CurrentOperationType.Output -> O) -> FlowOperationChainLink<RootOperationType, FlowClosureOperation<CurrentOperationType.Output, O>> {
         return self.append(FlowClosureOperation(closure: closure))
+    }
+    
+    /// Append a FlowClearOperation to this chain, causing its current type to be cleared
+    public func clear() -> FlowOperationChainLink<RootOperationType, FlowClearOperation<CurrentOperationType.Output>> {
+        return self.append(FlowClearOperation())
     }
 }
 

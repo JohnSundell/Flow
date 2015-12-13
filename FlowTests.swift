@@ -100,6 +100,20 @@ class FlowTests: XCTestCase {
         
         XCTAssertTrue(closureOperationInvoked)
     }
+    
+    func testClearOperation() {
+        var closureOperationInvoked = false
+        
+        StringLengthOperation()
+            .toChain()
+            .clear()
+            .append(FlowClosureOperation(closure: {
+                closureOperationInvoked = true
+            }))
+            .performWithInput("Flow")
+        
+        XCTAssertTrue(closureOperationInvoked)
+    }
 }
 
 // MARK: - Operations
