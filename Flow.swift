@@ -54,6 +54,14 @@ public protocol FlowOperation {
     func performWithInput(input: Input, completionHandler: Output -> Void)
 }
 
+/// Extension adding convenience APIs to any Flow Operation
+public extension FlowOperation {
+    /// Return an operation chain with this operation as its root
+    func toChain() -> FlowOperationChain<Self> {
+        return FlowOperationChain(rootOperation: self)
+    }
+}
+
 /// Operation that performs a closure synchronously given any input/output combination
 public class FlowClosureOperation<I, O>: FlowOperation {
     private let closure: I -> O
