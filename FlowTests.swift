@@ -4,140 +4,233 @@ import XCTest
 
 class FlowTests: XCTestCase {
     func testClosureOperation() {
-        let input = "input"
+        var closureCalled = false
+        var completionHandlerCalled = false
         
-        let expectedOutput = 5
-        var actualOutput: Int?
-        
-        let operation = FlowClosureOperation<String, Int>(closure: { return $0.characters.count })
-        operation.performWithInput(input, completionHandler: {
-            actualOutput = $0
+        let operation = FlowClosureOperation(closure: {
+            closureCalled = true
         })
         
-        XCTAssertEqual(actualOutput, expectedOutput)
+        operation.performWithCompletionHandler({
+            completionHandlerCalled = true
+        })
+        
+        XCTAssertTrue(closureCalled)
+        XCTAssertTrue(completionHandlerCalled)
     }
-
-    func testOperationChain() {
-        let stringLengthOperation = StringLengthOperation()
-        let stringSplitOperation = AsyncStringReplicationOperation()
+    
+    func testAsyncClosureOperation() {
+        var closureCalled = false
+        var completionHandlerCalled = false
         
-        let expectation = self.expectationWithDescription("Operation chain")
+        let operation = FlowAsyncClosureOperation(closure: {
+            closureCalled = true
+            $0()
+        })
         
-        let expectedOutput = Array(count: 5, repeatedValue: "STRING")
-        var actualOutput = [String]()
+        operation.performWithCompletionHandler({
+            completionHandlerCalled = true
+        })
         
-        FlowOperationChain(rootOperation: stringLengthOperation)
-            .append(stringSplitOperation)
-            .performWithInput("input", completionHandler: {
-                actualOutput = $0
-                expectation.fulfill()
-            })
+        XCTAssertTrue(closureCalled)
+        XCTAssertTrue(completionHandlerCalled)
+    }
+    
+    func testDelayOperation() {
+        let startTimestamp = NSDate().timeIntervalSince1970
+        let delay = NSTimeInterval(1)
+        let expectation = self.expectationWithDescription("delayOperation")
         
-        self.waitForExpectationsWithTimeout(1, handler: {
+        let operation = FlowDelayOperation(delay: delay)
+        operation.performWithCompletionHandler({
+            expectation.fulfill()
+        })
+        
+        self.waitForExpectationsWithTimeout(delay + 0.5, handler: {
             XCTAssertNil($0)
-            XCTAssertEqual(actualOutput, expectedOutput)
+            
+            let endTimestamp = NSDate().timeIntervalSince1970
+            XCTAssertEqual(floor(endTimestamp - startTimestamp), delay)
         })
     }
     
-    func testOptionalOperationChain() {
-        let substringOperation = OptionalSubstringOperation()
-        let chain = FlowOperationChain(rootOperation: substringOperation)
+    func testOperationSequence() {
+        var numbersFromClosures = [Int]()
         
-        let expectedOutput = "St"
-        var actualOutput: String?
-        
-        chain.performWithInput("String", completionHandler: {
-            actualOutput = $0
+        let firstOperation = FlowClosureOperation(closure: {
+            numbersFromClosures.append(1)
         })
         
-        XCTAssertEqual(expectedOutput, actualOutput)
-        
-        chain.performWithInput(nil, completionHandler: {
-            actualOutput = $0
+        let secondOperation = FlowClosureOperation(closure: {
+            numbersFromClosures.append(2)
         })
         
-        XCTAssertNil(actualOutput)
+        let thirdOperation = FlowClosureOperation(closure: {
+            numbersFromClosures.append(3)
+        })
+        
+        var completionHandlerCalled = false
+        
+        let sequence = FlowOperationSequence(operations: [firstOperation, secondOperation, thirdOperation])
+        sequence.performWithCompletionHandler({
+            completionHandlerCalled = true
+        })
+        
+        XCTAssertTrue(completionHandlerCalled)
+        XCTAssertEqual(numbersFromClosures, [1, 2, 3])
     }
     
-    func testPredicateOperation() {
-        let predicateOperation = FlowPredicateOperation(predicate: "Flow", operation: FlowClosureOperation(closure: {
-            return $0 + " Operation"
-        }))
+    func testOperationSequenceIsImmutableWhileRunning() {
+        let originalOperation = FlowOperationMock()
         
-        var completionHandlerInvoked = false
+        var sequence = FlowOperationSequence(operation: originalOperation)
+        sequence.performWithCompletionHandler({})
         
-        predicateOperation.performWithInput("Not flow", completionHandler: {
-            XCTAssertEqual("Not flow", $0)
-            completionHandlerInvoked = true
+        var addedOperationPerformed = false
+        
+        let addedOperation = FlowClosureOperation(closure: {
+            addedOperationPerformed = true
         })
         
-        XCTAssertTrue(completionHandlerInvoked)
-        completionHandlerInvoked = false
+        sequence.addOperation(addedOperation)
+        originalOperation.complete()
+        XCTAssertFalse(addedOperationPerformed)
         
-        predicateOperation.performWithInput("Flow", completionHandler: {
-            XCTAssertEqual("Flow Operation", $0)
-            completionHandlerInvoked = true
+        sequence.performWithCompletionHandler({})
+        originalOperation.complete()
+        XCTAssertTrue(addedOperationPerformed)
+    }
+    
+    func testOperationGroup() {
+        let firstOperation = FlowOperationMock()
+        let secondOperation = FlowOperationMock()
+        let group = FlowOperationGroup(operations: [firstOperation, secondOperation])
+        
+        var completionHandlerCalled = false
+        
+        group.performWithCompletionHandler({
+            completionHandlerCalled = true
         })
         
-        XCTAssertTrue(completionHandlerInvoked)
+        XCTAssertTrue(firstOperation.started)
+        XCTAssertTrue(secondOperation.started)
+        
+        firstOperation.complete()
+        XCTAssertFalse(completionHandlerCalled)
+        
+        secondOperation.complete()
+        XCTAssertTrue(completionHandlerCalled)
     }
     
-    func testPredicateOperationDiscardingNonMatchingOutput() {
-        let predicateOperation = FlowPredicateOperation(predicate: 5, operation: FlowClosureOperation(closure: {
-            return "Flow " + String($0)
-        }))
+    func testOperationGroupIsImmutableWhileRunning() {
+        let originalOperation = FlowOperationMock()
         
-        var closureOperationInvoked = false
+        var group = FlowOperationGroup(operation: originalOperation)
+        group.performWithCompletionHandler({})
         
-        StringLengthOperation()
-            .toChain()
-            .append(predicateOperation)
-            .append(FlowClosureOperation(closure: {
-                XCTAssertEqual($0, 5)
-                closureOperationInvoked = true
-            }))
-            .performWithInput("Hello")
+        var addedOperationPerformed = false
         
-        XCTAssertTrue(closureOperationInvoked)
+        let addedOperation = FlowClosureOperation(closure: {
+            addedOperationPerformed = true
+        })
+        
+        group.addOperation(addedOperation)
+        originalOperation.complete()
+        XCTAssertFalse(addedOperationPerformed)
+        
+        group.performWithCompletionHandler({})
+        originalOperation.complete()
+        XCTAssertTrue(addedOperationPerformed)
     }
     
-    func testClearOperation() {
-        var closureOperationInvoked = false
+    func testOperationQueue() {
+        var initialOperationPerformed = false
         
-        StringLengthOperation()
-            .toChain()
-            .clear()
-            .append(FlowClosureOperation(closure: {
-                closureOperationInvoked = true
-            }))
-            .performWithInput("Flow")
+        let initialOperation = FlowClosureOperation(closure: {
+            initialOperationPerformed = true
+        })
         
-        XCTAssertTrue(closureOperationInvoked)
+        let queue = FlowOperationQueue(operation: initialOperation)
+        XCTAssertTrue(initialOperationPerformed)
+        
+        var queuedOperationPerformed = false
+        
+        let queuedOperation = FlowClosureOperation(closure: {
+            queuedOperationPerformed = true
+        })
+        
+        let blockingOperation = FlowOperationMock()
+        
+        queue.addOperation(blockingOperation)
+        queue.addOperation(queuedOperation)
+        
+        XCTAssertFalse(queuedOperationPerformed)
+        
+        blockingOperation.complete()
+        
+        XCTAssertTrue(queuedOperationPerformed)
+    }
+    
+    func testOperationRepeater() {
+        var repeatCount = 0
+        
+        let incrementCountOperation = FlowClosureOperation(closure: {
+            repeatCount++
+        })
+        
+        let blockingOperation = FlowOperationMock()
+        
+        let repeater = FlowOperationRepeater(operations: [incrementCountOperation, blockingOperation])
+        XCTAssertTrue(repeater.isStopped)
+        XCTAssertEqual(repeatCount, 0)
+        
+        repeater.start()
+        XCTAssertEqual(repeatCount, 1)
+        
+        blockingOperation.complete()
+        blockingOperation.complete()
+        blockingOperation.complete()
+        XCTAssertEqual(repeatCount, 4)
+    }
+    
+    func testOperationRepeaterWithInterval() {
+        let expectation = self.expectationWithDescription("repeater-interval")
+        
+        let delayOperation = FlowDelayOperation(delay: 1.1)
+        delayOperation.performWithCompletionHandler({
+            expectation.fulfill()
+        })
+        
+        var repeatCount = 0
+        
+        let operation = FlowClosureOperation(closure: {
+            repeatCount++
+        })
+        
+        let repeater = FlowOperationRepeater(operation: operation, interval: 0.25)
+        repeater.start()
+        
+        self.waitForExpectationsWithTimeout(1.2, handler: {
+            XCTAssertNil($0)
+            XCTAssertEqual(repeatCount, 4)
+        })
     }
 }
 
-// MARK: - Operations
-
-class StringLengthOperation: FlowOperation {
-    func performWithInput(input: String, completionHandler: Int -> Void) {
-        completionHandler(input.characters.count)
+private class FlowOperationMock: FlowOperation {
+    var started = false
+    var completionHandler: (() -> Void)?
+    
+    func performWithCompletionHandler(completionHandler: () -> Void) {
+        self.started = true
+        self.completionHandler = completionHandler
     }
-}
-
-class AsyncStringReplicationOperation: FlowOperation {
-    func performWithInput(input: Int, completionHandler: [String] -> Void) {
-        dispatch_async(dispatch_queue_create("STRING_REPLICATION", nil), {
-            completionHandler(Array(count: input, repeatedValue: "STRING"))
-        })
-    }
-}
-
-class OptionalSubstringOperation: FlowOperation {
-    func performWithInput(input: String?, completionHandler: String? -> Void) {
-        if let input = input {
-            completionHandler(input.substringToIndex(input.startIndex.advancedBy(2)))
+    
+    func complete() {
+        if let completionHandler = self.completionHandler {
+            completionHandler()
         } else {
-            completionHandler(nil)
+            assertionFailure()
         }
     }
 }
