@@ -18,16 +18,21 @@ public class FlowSpriteKitActionOperation: FlowOperation {
 
 /// Flow operation that preloads a SpriteKit texture atlas
 public class FlowSpriteKitTextureAtlasPreloadOperation: FlowOperation {
-    private let atlasName: String
+    /// The texture atlas that this operation is preloading
+    public let atlas: SKTextureAtlas
+    
+    /// Initialze an instance with a texture atlas to preload
+    public init(atlas: SKTextureAtlas) {
+        self.atlas = atlas
+    }
     
     /// Initialize an instance with the name of the atlas to preload
-    public init(atlasName: String) {
-        self.atlasName = atlasName
+    public convenience init(atlasName: String) {
+        self.init(atlas: SKTextureAtlas(named: atlasName))
     }
     
     public func performWithCompletionHandler(completionHandler: () -> Void) {
-        let atlas = SKTextureAtlas(named: self.atlasName)
-        atlas.preloadWithCompletionHandler({
+        self.atlas.preloadWithCompletionHandler({
             dispatch_async(dispatch_get_main_queue(), completionHandler)
         })
     }
