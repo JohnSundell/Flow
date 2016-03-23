@@ -320,7 +320,7 @@ private class FlowOperationGroupPerformer: FlowOperation {
         
         for operation in self.operationGroup.operations {
             operation.performWithCompletionHandler({
-                operationsLeft--
+                operationsLeft -= 1
                 
                 if operationsLeft == 0 {
                     completionHandler()

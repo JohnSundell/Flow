@@ -175,7 +175,7 @@ class FlowTests: XCTestCase {
         var repeatCount = 0
         
         let incrementCountOperation = FlowClosureOperation(closure: {
-            repeatCount++
+            repeatCount += 1
         })
         
         let blockingOperation = FlowOperationMock()
@@ -204,7 +204,7 @@ class FlowTests: XCTestCase {
         var repeatCount = 0
         
         let operation = FlowClosureOperation(closure: {
-            repeatCount++
+            repeatCount += 1
         })
         
         let repeater = FlowOperationRepeater(operation: operation, interval: 0.25)
