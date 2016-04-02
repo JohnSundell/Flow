@@ -40,6 +40,14 @@ public protocol FlowOperation {
     func performWithCompletionHandler(completionHandler: () -> Void)
 }
 
+/// Extension adding convenience APIs to objects conforming to `FlowOperation`
+public extension FlowOperation {
+    /// Perform the operation without a completion handler
+    func perform() {
+        self.performWithCompletionHandler({})
+    }
+}
+
 /**
  *  Protocol used to define a collection of Flow operations
  *
@@ -54,7 +62,7 @@ public protocol FlowOperationCollection {
     mutating func addOperation(operation: FlowOperation)
 }
 
-/// Extension adding convenience APIs to `FlowOperationCollection`
+/// Extension adding convenience APIs to objects conforming to `FlowOperationCollection`
 public extension FlowOperationCollection {
     /// Initialize an instance with a single operation to form the collection with
     init(operation: FlowOperation) {
