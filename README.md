@@ -180,7 +180,7 @@ Used to repeat operations, optionally using an interval in between repeats.
 
 **CocoaPods:**
 
-Add the line `pod "Flow"` to your `Podfile`
+Add the line `pod "FlowOperations"` to your `Podfile`
 
 **Carthage:**
 

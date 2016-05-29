@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  s.name         = "Flow"
+  s.name         = "FlowOperations"
   s.version      = "1.0"
   s.summary      = "Operation Oriented Programming in Swift"
   s.description  = <<-DESC
