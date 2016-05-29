@@ -1,6 +1,6 @@
 # Flow
 
-Flow is a lightweight Swift library for doing operation oriented programming. It enables you to easily define your own, atomic operations, and also contains an exensive library of ready-to-use operations that can be grouped, sequenced and repeated.
+Flow is a lightweight Swift library for doing operation oriented programming. It enables you to easily define your own, atomic operations, and also contains an exensive library of ready-to-use operations that can be grouped, sequenced, queued and repeated.
 
 ### Operations
 
@@ -15,8 +15,6 @@ An operation can do anything, synchronously or asynchronously, and its scope is 
 - Use any of the built-in operations, such as `FlowClosureOperation`, `FlowDelayOperation`, etc.
 
 - Create sequences of operations (that get executed one by one) using `FlowOperationSequence`, groups (that get executed all at once) using `FlowOperationGroup`, or queues (that can be continuously filled with operations) using `FlowOperationQueue`.
-
-- There are also convenience operations available for doing animations in `UIKit`, as well as using Flow together with `SpriteKit`.
 
 ## API reference
 
@@ -39,7 +37,7 @@ Operation that runs a closure, then waits for that closure to call a completion 
 **`FlowDelayOperation`**
 Operation that waits for a certain delay before finishing. Useful in sequences and queues.
 
-### Operation collections & utility objects
+### Operation collections & utilities
 
 **`FlowOperationGroup`**
 Used to group together a series of operations that all get performed at once when the group is performed.
@@ -52,23 +50,6 @@ Queue that keeps executing the next operation as soon as it becomes idle. New op
 
 **`FlowOperationRepeater`**
 Used to repeat operations, optionally using an interval in between repeats.
-
-### UIKit
-
-**`FlowUIAnimationOperation`**
-Operation that performs a `UIKit` animation.
-
-### SpriteKit
-
-**`FlowSpriteKitActionOperation`**
-Operation that wraps an `SKAction`, running it on a node once the operation is performed.
-
-**`FlowSpriteKitTextureAtlasPreloadOperation`**
-Operation that preloads an `SKTextureAtlas` when performed.
-
-## Contributing
-
-Have an operation implementation you think more people would benefit from? Send a PR! :)
 
 ## Hope you enjoy using Flow!
 
