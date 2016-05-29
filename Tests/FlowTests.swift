@@ -1,4 +1,5 @@
 import XCTest
+import Flow
 
 // MARK: - Tests
 
@@ -171,6 +172,33 @@ class FlowTests: XCTestCase {
         XCTAssertTrue(queuedOperationPerformed)
     }
     
+    func testObservingOperationQueue() {
+        let operation = FlowOperationMock()
+        let observer = FlowOperationQueueObserverMock()
+        
+        let queue = FlowOperationQueue(operation: operation)
+        queue.addObserver(observer)
+        
+        operation.complete()
+        XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 1)
+        
+        queue.addOperation(operation)
+        XCTAssertEqual(observer.startedOperations.count, 1)
+        XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
+        
+        operation.complete()
+        XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
+        
+        queue.removeObserver(observer)
+        
+        queue.addOperation(operation)
+        XCTAssertEqual(observer.startedOperations.count, 1)
+        XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
+        
+        operation.complete()
+        XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
+    }
+    
     func testOperationRepeater() {
         var repeatCount = 0
         
@@ -210,12 +238,14 @@ class FlowTests: XCTestCase {
         let repeater = FlowOperationRepeater(operation: operation, interval: 0.25)
         repeater.start()
         
-        self.waitForExpectationsWithTimeout(1.2, handler: {
+        self.waitForExpectationsWithTimeout(5, handler: {
             XCTAssertNil($0)
             XCTAssertEqual(repeatCount, 4)
         })
     }
 }
+
+// MARK: - Mocks
 
 private class FlowOperationMock: FlowOperation {
     var started = false
@@ -232,5 +262,18 @@ private class FlowOperationMock: FlowOperation {
         } else {
             assertionFailure()
         }
+    }
+}
+
+private class FlowOperationQueueObserverMock: FlowOperationQueueObserver {
+    var startedOperations = [FlowOperation]()
+    var numberOfTimesQueueBecameEmpty = 0
+    
+    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {
+        self.startedOperations.append(operation)
+    }
+    
+    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue) {
+        self.numberOfTimesQueueBecameEmpty += 1
     }
 }

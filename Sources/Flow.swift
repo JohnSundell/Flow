@@ -154,7 +154,7 @@ public struct FlowOperationSequence: FlowOperation, FlowOperationCollection {
     public mutating func addOperation(operation: FlowOperation) {
         self.operations.append(operation)
     }
-
+    
     public func performWithCompletionHandler(completionHandler: () -> Void) {
         FlowOperationSequencePerformer(operationSequence: self).performWithCompletionHandler(completionHandler)
     }
@@ -186,19 +186,32 @@ public struct FlowOperationGroup: FlowOperation, FlowOperationCollection {
     }
 }
 
+/// Observation protocol for FlowOperationQueue
+public protocol FlowOperationQueueObserver: class {
+    /// Sent to an operation queue's observers when it's about to start performing an operation
+    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation)
+    /// Sent to an operation queue's observers when it became empty
+    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue)
+}
+
 /**
  *  Flow operation collection that enqueues operations and executes them once idle
  *
  *  This collection cannot be performed, rather it auto-performs any added operations once
  *  any currently performed operation has finished, or immediately if it's idle.
+ *
+ *  You can also add observers to the operation queue, to get notified when the queue
+ *  becomes empty; see `FlowOperationQueueObserver` for more information.
  */
 public final class FlowOperationQueue: FlowOperationCollection {
     private var operations: [FlowOperation]
     private var isPerformingOperation: Bool
+    private var observers: [ObjectIdentifier : FlowOperationQueueObserverWrapper]
     
     public init(operations: [FlowOperation] = []) {
         self.operations = operations
         self.isPerformingOperation = false
+        self.observers = [:]
         self.performFirstOperation()
     }
     
@@ -220,14 +233,43 @@ public final class FlowOperationQueue: FlowOperationCollection {
         self.operations.append(wrapper)
     }
     
+    public func addObserver(observer: FlowOperationQueueObserver) {
+        let identifier = ObjectIdentifier(observer)
+        
+        if self.observers[identifier] != nil {
+            return
+        }
+        
+        let wrapper = FlowOperationQueueObserverWrapper(observer: observer, queue: self)
+        self.observers[identifier] = wrapper
+    }
+    
+    public func removeObserver(observer: FlowOperationQueueObserver) {
+        let identifier = ObjectIdentifier(observer)
+        self.observers[identifier] = nil
+    }
+    
     private func performFirstOperation() {
-        if self.operations.count == 0 || self.isPerformingOperation {
+        if self.isPerformingOperation  {
+            return
+        }
+        
+        if self.operations.count == 0 {
+            for observerWrapper in self.observers.values {
+                observerWrapper.observer?.operationQueueDidBecomeEmpty(self)
+            }
+            
             return
         }
         
         self.isPerformingOperation = true
         
         let operation = self.operations.removeFirst()
+        
+        for observerWrapper in self.observers.values {
+            observerWrapper.observer?.operationQueue(self, willStartPerformingOperation: operation)
+        }
+        
         operation.performWithCompletionHandler({
             self.isPerformingOperation = false
             self.performFirstOperation()
@@ -335,5 +377,21 @@ private class FlowOperationGroupPerformer: FlowOperation {
                 }
             })
         }
+    }
+}
+
+private class FlowOperationQueueObserverWrapper {
+    weak var observer: FlowOperationQueueObserver? {
+        willSet {
+            if let observer = self.observer where newValue == nil {
+                self.queue?.removeObserver(observer)
+            }
+        }
+    }
+    weak var queue: FlowOperationQueue?
+    
+    init(observer: FlowOperationQueueObserver, queue: FlowOperationQueue) {
+        self.observer = observer
+        self.queue = queue
     }
 }
