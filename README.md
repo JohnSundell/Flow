@@ -20,7 +20,7 @@ An operation can do anything, synchronously or asynchronously, and its scope is 
 
 Let’s say we’re building a game and we want to perform a series of animations where a `Player` attacks an `Enemy`, destroys it and then plays a victory animation. This could of course be accomplished with the use of completion handler closures:
 
-```
+```swift
 player.moveTo(enemy.position) {
     player.performAttack() {
         enemy.destroy() {
@@ -32,7 +32,7 @@ player.moveTo(enemy.position) {
 
 However, this quickly becomes hard to reason about and debug, especially if we start adding multiple animations that we want to sync. Let’s say we decide to implement a new **spin attack** in our game, that destroys multiple enemies, and we want all enemies to be destroyed before we play the victory animation. We’d have to do something like this:
 
-```
+```swift
 player.moveTo(mainEnemy.position) {
     player.performAttack() {
         var enemiesDestroyed = 0
@@ -52,46 +52,90 @@ player.moveTo(mainEnemy.position) {
 
 It becomes clear that the more we add to our animation, the more error prone and hard to debug it becomes. Wouldn’t it be great if our animations (or any other sequence of tasks) could scale gracefully as we make them more and more complex?
 
-Let’s implement the above using Flow instead:
+Let’s implement the above using Flow instead. We’ll start by defining all tasks that we need to perform during our animation as **operations**:
 
-```
-let moveOperation = FlowAsyncClosureOperation(closure: {
-    player.moveTo(mainEnemy.position, completionHandler: $0)
-})
-        
-let attackOperation = FlowAsyncClosureOperation(closure: {
-    player.performAttack($0)
-})
-        
-var destroyEnemiesOperationGroup = FlowOperationGroup()
-        
-for enemy in enemies {
-    let destroyEnemyOperation = FlowAsyncClosureOperation(closure: {
-        enemy.destroy($0)
-    })
-            
-    destroyEnemiesOperationGroup.addOperation(destroyEnemyOperation)
+```swift
+/// Operation that moves a Player to a destination
+class PlayerMoveOperation: FlowOperation {
+    private let player: Player
+    private let destination: CGPoint
+    
+    init(player: Player, destination: CGPoint) {
+        self.player = player
+        self.destination = destination
+    }
+    
+    func performWithCompletionHandler(completionHandler: () -> Void) {
+        self.player.moveTo(self.destination, completionHandler: completionHandler)
+    }
 }
-        
-let victoryOperation = FlowClosureOperation(closure: {
-    player.playVictoryAnimation()
-})
+
+/// Operation that performs a Player attack
+class PlayerAttackOperation: FlowOperation {
+    private let player: Player
+    
+    init(player: Player) {
+        self.player = player
+    }
+    
+    func performWithCompletionHandler(completionHandler: () -> Void) {
+        self.player.performAttack(completionHandler)
+    }
+}
+
+/// Operation that destroys an enemy
+class EnemyDestroyOperation: FlowOperation {
+    private let enemy: Enemy
+    
+    init(enemy: Enemy) {
+        self.enemy = enemy
+    }
+    
+    func performWithCompletionHandler(completionHandler: () -> Void) {
+        self.enemy.destroy(completionHandler)
+    }
+}
+
+/// Operation that plays a Player victory animation
+class PlayerVictoryOperation: FlowOperation {
+    private let player: Player
+    
+    init(player: Player) {
+        self.player = player
+    }
+    
+    func performWithCompletionHandler(completionHandler: () -> Void) {
+        self.player.playVictoryAnimation()
+        completionHandler()
+    }
+}
+```
+
+Secondly; we’ll implement our animation using the above operations:
+
+```swift
+let moveOperation = PlayerMoveOperation(player: player, destination: mainEnemy.position)
+let attackOperation = PlayerAttackOperation(player: player)
+let destroyEnemiesOperation = FlowOperationGroup(operations: enemies.map({
+    return EnemyDestroyOperation(enemy: $0)
+}))
+let victoryOperation = PlayerVictoryOperation(player: player)
         
 let operationSequence = FlowOperationSequence(operations: [
     moveOperation,
     attackOperation,
-    destroyEnemiesOperationGroup,
+    destroyEnemiesOperation,
     victoryOperation
 ])
         
 operationSequence.perform()
 ```
 
-While this code becomes a bit more verbose - it really has some big advantages.
+While we had to write a bit more code using operations; this approach has some big advantages.
 
 Firstly; we can now use a `FlowOperationGroup` to make sure that all enemy animations are finished before moving on, and by doing this we’ve reduced the state we need to keep within the animation itself.
 
-Secondly; all parts of the animation are now independant operations that don’t have to be aware of each other, making them a lot easier to test & debug - and they can potentially also be reused in other parts of our game.
+Secondly; all parts of the animation are now independant operations that don’t have to be aware of each other, making them a lot easier to test & debug - and they could also be reused in other parts of our game.
 
 ## API reference
 
