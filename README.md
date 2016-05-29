@@ -51,7 +51,7 @@ Queue that keeps executing the next operation as soon as it becomes idle. New op
 **`FlowOperationRepeater`**
 Used to repeat operations, optionally using an interval in between repeats.
 
-## How is this different from `NSOperations`?
+## How is this different from NSOperations?
 
 `NSOperations` are awesome - and are definetly one of the main sources of inspiration for Flow. However, `NSOperations` are quite heavyweight and can potentially take a long time to implement. Flow was designed to have the power of `NSOperations`, but be a lot simpler to implement. It’s also written 100% using Swift - making it ideal for Swift-based projects.
 
