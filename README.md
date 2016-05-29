@@ -6,7 +6,7 @@ Flow is a lightweight Swift library for doing operation oriented programming. It
 
 Using Flow is all about splitting your code up into multiple atomic pieces - called **operations**. Each operation defines a body of work, that can easily be reused throughout an app or library.
 
-An operation can do anything, synchronously or asynchronously, and its scope is really up to you. The true power of operation oriented programming however, comes when you create groups, sequences and queues out of operations.
+An operation can do anything, synchronously or asynchronously, and its scope is really up to you. The true power of operation oriented programming however, comes when you create groups, sequences and queues out of operations. Operations can potentially make code that is either asynchronous, or where work has to be done in several places, a lot simpler.
 
 ## How to use
 
@@ -50,6 +50,10 @@ Queue that keeps executing the next operation as soon as it becomes idle. New op
 
 **`FlowOperationRepeater`**
 Used to repeat operations, optionally using an interval in between repeats.
+
+## How is this different from `NSOperations`?
+
+`NSOperations` are awesome - and are definetly one of the main sources of inspiration for Flow. However, `NSOperations` are quite heavyweight and can potentially take a long time to implement. Flow was designed to have the power of `NSOperations`, but be a lot simpler to implement. It’s also written 100% using Swift - making it ideal for Swift-based projects.
 
 ## Hope you enjoy using Flow!
 
