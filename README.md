@@ -55,6 +55,24 @@ Used to repeat operations, optionally using an interval in between repeats.
 
 `NSOperations` are awesome - and are definetly one of the main sources of inspiration for Flow. However, `NSOperations` are quite heavyweight and can potentially take a long time to implement. Flow was designed to have the power of `NSOperations`, but be a lot simpler to implement. It’s also written 100% using Swift - making it ideal for Swift-based projects.
 
+## Installation
+
+**CocoaPods:**
+
+Add the line `pod "Flow"` to your `Podfile`
+
+**Carthage:**
+
+Add the line `github "johnsundell/flow"` to your `Cartfile`
+
+**Manual:**
+
+Clone the repo and drag the file `Flow.swift` into your Xcode project.
+
+**Swift Package Manager:**
+
+Add the line `.Package(url: "https://github.com/johnsundell/flow.git", majorVersion: 1)` to your `Package.swift`
+
 ## Hope you enjoy using Flow!
 
 For support, feedback & news about Flow; follow me on Twitter: [@johnsundell](http://twitter.com/johnsundell).
