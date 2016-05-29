@@ -16,6 +16,83 @@ An operation can do anything, synchronously or asynchronously, and its scope is 
 
 - Create sequences of operations (that get executed one by one) using `FlowOperationSequence`, groups (that get executed all at once) using `FlowOperationGroup`, or queues (that can be continuously filled with operations) using `FlowOperationQueue`.
 
+## Example
+
+Let’s say we’re building a game and we want to perform a series of animations where a `Player` attacks an `Enemy`, destroys it and then plays a victory animation. This could of course be accomplished with the use of completion handler closures:
+
+```
+player.moveTo(enemy.position) {
+    player.performAttack() {
+        enemy.destroy() {
+            player.playVictoryAnimation()
+        }
+    }
+}
+```
+
+However, this quickly becomes hard to reason about and debug, especially if we start adding multiple animations that we want to sync. Let’s say we decide to implement a new **spin attack** in our game, that destroys multiple enemies, and we want all enemies to be destroyed before we play the victory animation. We’d have to do something like this:
+
+```
+player.moveTo(mainEnemy.position) {
+    player.performAttack() {
+        var enemiesDestroyed = 0
+                
+        for enemy in enemies {
+            enemy.destroy({
+                enemiesDestroyed += 1
+                        
+                if enemiesDestroyed == enemies.count {
+                    player.playVictoryAnimation()
+                }
+            })
+        }
+    }
+}
+```
+
+It becomes clear that the more we add to our animation, the more error prone and hard to debug it becomes. Wouldn’t it be great if our animations (or any other sequence of tasks) could scale gracefully as we make them more and more complex?
+
+Let’s implement the above using Flow instead:
+
+```
+let moveOperation = FlowAsyncClosureOperation(closure: {
+    player.moveTo(mainEnemy.position, completionHandler: $0)
+})
+        
+let attackOperation = FlowAsyncClosureOperation(closure: {
+    player.performAttack($0)
+})
+        
+var destroyEnemiesOperationGroup = FlowOperationGroup()
+        
+for enemy in enemies {
+    let destroyEnemyOperation = FlowAsyncClosureOperation(closure: {
+        enemy.destroy($0)
+    })
+            
+    destroyEnemiesOperationGroup.addOperation(destroyEnemyOperation)
+}
+        
+let victoryOperation = FlowClosureOperation(closure: {
+    player.playVictoryAnimation()
+})
+        
+let operationSequence = FlowOperationSequence(operations: [
+    moveOperation,
+    attackOperation,
+    destroyEnemiesOperationGroup,
+    victoryOperation
+])
+        
+operationSequence.perform()
+```
+
+While this code becomes a bit more verbose - it really has some big advantages.
+
+Firstly; we can now use a `FlowOperationGroup` to make sure that all enemy animations are finished before moving on, and by doing this we’ve reduced the state we need to keep within the animation itself.
+
+Secondly; all parts of the animation are now independant operations that don’t have to be aware of each other, making them a lot easier to test & debug - and they can potentially also be reused in other parts of our game.
+
 ## API reference
 
 ### Protocols
