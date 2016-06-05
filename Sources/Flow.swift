@@ -68,6 +68,13 @@ public extension FlowOperationCollection {
     init(operation: FlowOperation) {
         self.init(operations: [operation])
     }
+    
+    /// Add a series of operations to the collection
+    mutating func addOperations(operations: [FlowOperation]) {
+        for operation in operations {
+            self.addOperation(operation)
+        }
+    }
 }
 
 /**
