@@ -201,6 +201,12 @@ public protocol FlowOperationQueueObserver: class {
     func operationQueueDidBecomeEmpty(queue: FlowOperationQueue)
 }
 
+/// Extension containing default implementations for FlowOperationQueueObserver's methods
+public extension FlowOperationQueueObserver {
+    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {}
+    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue) {}
+}
+
 /**
  *  Flow operation collection that enqueues operations and executes them once idle
  *
