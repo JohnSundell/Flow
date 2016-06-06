@@ -243,6 +243,20 @@ class FlowTests: XCTestCase {
             XCTAssertEqual(repeatCount, 4)
         })
     }
+    
+    func testAddingMultipleOperationsToCollection() {
+        let operationA = FlowOperationMock()
+        let operationB = FlowOperationMock()
+        let operationC = FlowOperationMock()
+        
+        var collection = FlowOperationGroup()
+        collection.addOperations([operationA, operationB, operationC])
+        collection.perform()
+        
+        XCTAssertTrue(operationA.started)
+        XCTAssertTrue(operationB.started)
+        XCTAssertTrue(operationC.started)
+    }
 }
 
 // MARK: - Mocks
