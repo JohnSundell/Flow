@@ -65,7 +65,7 @@ class PlayerMoveOperation: FlowOperation {
         self.destination = destination
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         self.player.moveTo(self.destination, completionHandler: completionHandler)
     }
 }
@@ -78,7 +78,7 @@ class PlayerAttackOperation: FlowOperation {
         self.player = player
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         self.player.performAttack(completionHandler)
     }
 }
@@ -91,7 +91,7 @@ class EnemyDestroyOperation: FlowOperation {
         self.enemy = enemy
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         self.enemy.destroy(completionHandler)
     }
 }
@@ -104,7 +104,7 @@ class PlayerVictoryOperation: FlowOperation {
         self.player = player
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         self.player.playVictoryAnimation()
         completionHandler()
     }
