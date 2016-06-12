@@ -37,14 +37,14 @@ import Foundation
  */
 public protocol FlowOperation {
     /// Perform the operation with a completion handler
-    func performWithCompletionHandler(completionHandler: () -> Void)
+    func perform(completionHandler: () -> Void)
 }
 
 /// Extension adding convenience APIs to objects conforming to `FlowOperation`
 public extension FlowOperation {
     /// Perform the operation without a completion handler
     func perform() {
-        self.performWithCompletionHandler({})
+        self.perform(completionHandler: {})
     }
 }
 
@@ -59,7 +59,7 @@ public protocol FlowOperationCollection {
     /// Initialize an instance with operations to form the collection with
     init(operations: [FlowOperation])
     /// Add an operation to the collection
-    mutating func addOperation(operation: FlowOperation)
+    mutating func add(operation: FlowOperation)
 }
 
 /// Extension adding convenience APIs to objects conforming to `FlowOperationCollection`
@@ -70,9 +70,9 @@ public extension FlowOperationCollection {
     }
     
     /// Add a series of operations to the collection
-    mutating func addOperations(operations: [FlowOperation]) {
+    mutating func add(operations: [FlowOperation]) {
         for operation in operations {
-            self.addOperation(operation)
+            self.add(operation: operation)
         }
     }
 }
@@ -91,7 +91,7 @@ public class FlowClosureOperation: FlowOperation {
         self.closure = closure
     }
     
-    public func performWithCompletionHandler(completionHandler: () -> Void) {
+    public func perform(completionHandler: () -> Void) {
         self.closure()
         completionHandler()
     }
@@ -115,7 +115,7 @@ public class FlowAsyncClosureOperation: FlowOperation {
         self.closure = closure
     }
     
-    public func performWithCompletionHandler(completionHandler: () -> Void) {
+    public func perform(completionHandler: () -> Void) {
         self.closure(completionHandler)
     }
 }
@@ -135,7 +135,7 @@ public class FlowDelayOperation: FlowOperation {
         self.delay = delay
     }
     
-    public func performWithCompletionHandler(completionHandler: () -> Void) {
+    public func perform(completionHandler: () -> Void) {
         let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(self.delay * Double(NSEC_PER_SEC)))
         dispatch_after(delayTime, dispatch_get_main_queue(), completionHandler)
     }
@@ -158,12 +158,12 @@ public struct FlowOperationSequence: FlowOperation, FlowOperationCollection {
         self.operations = operations
     }
     
-    public mutating func addOperation(operation: FlowOperation) {
+    public mutating func add(operation: FlowOperation) {
         self.operations.append(operation)
     }
     
-    public func performWithCompletionHandler(completionHandler: () -> Void) {
-        FlowOperationSequencePerformer(operationSequence: self).performWithCompletionHandler(completionHandler)
+    public func perform(completionHandler: () -> Void) {
+        FlowOperationSequencePerformer(operationSequence: self).perform(completionHandler: completionHandler)
     }
 }
 
@@ -184,27 +184,27 @@ public struct FlowOperationGroup: FlowOperation, FlowOperationCollection {
         self.operations = operations
     }
     
-    public mutating func addOperation(operation: FlowOperation) {
+    public mutating func add(operation: FlowOperation) {
         self.operations.append(operation)
     }
     
-    public func performWithCompletionHandler(completionHandler: () -> Void) {
-        FlowOperationGroupPerformer(operationGroup: self).performWithCompletionHandler(completionHandler)
+    public func perform(completionHandler: () -> Void) {
+        FlowOperationGroupPerformer(operationGroup: self).perform(completionHandler: completionHandler)
     }
 }
 
 /// Observation protocol for FlowOperationQueue
 public protocol FlowOperationQueueObserver: class {
     /// Sent to an operation queue's observers when it's about to start performing an operation
-    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation)
+    func operationQueue(_ queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation)
     /// Sent to an operation queue's observers when it became empty
-    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue)
+    func operationQueueDidBecomeEmpty(_ queue: FlowOperationQueue)
 }
 
 /// Extension containing default implementations for FlowOperationQueueObserver's methods
 public extension FlowOperationQueueObserver {
-    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {}
-    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue) {}
+    func operationQueue(_ queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {}
+    func operationQueueDidBecomeEmpty(_ queue: FlowOperationQueue) {}
 }
 
 /**
@@ -228,17 +228,17 @@ public final class FlowOperationQueue: FlowOperationCollection {
         self.performFirstOperation()
     }
     
-    public func addOperation(operation: FlowOperation) {
+    public func add(operation: FlowOperation) {
         self.operations.append(operation)
         self.performFirstOperation()
     }
     
     /// Add an operation to the queue, with a completion handler that gets called once it has finished
-    public func addOperation(operation: FlowOperation, completionHandler: () -> Void) {
+    public func add(operation: FlowOperation, completionHandler: () -> Void) {
         let wrapper = FlowAsyncClosureOperation(closure: {
             let internalCompletionHandler = $0
             
-            operation.performWithCompletionHandler({
+            operation.perform(completionHandler: {
                 internalCompletionHandler()
                 completionHandler()
             })
@@ -246,7 +246,7 @@ public final class FlowOperationQueue: FlowOperationCollection {
         self.operations.append(wrapper)
     }
     
-    public func addObserver(observer: FlowOperationQueueObserver) {
+    public func add(observer: FlowOperationQueueObserver) {
         let identifier = ObjectIdentifier(observer)
         
         if self.observers[identifier] != nil {
@@ -257,7 +257,7 @@ public final class FlowOperationQueue: FlowOperationCollection {
         self.observers[identifier] = wrapper
     }
     
-    public func removeObserver(observer: FlowOperationQueueObserver) {
+    public func remove(observer: FlowOperationQueueObserver) {
         let identifier = ObjectIdentifier(observer)
         self.observers[identifier] = nil
     }
@@ -283,7 +283,7 @@ public final class FlowOperationQueue: FlowOperationCollection {
             observerWrapper.observer?.operationQueue(self, willStartPerformingOperation: operation)
         }
         
-        operation.performWithCompletionHandler({
+        operation.perform(completionHandler: {
             self.isPerformingOperation = false
             self.performFirstOperation()
         })
@@ -343,7 +343,7 @@ public class FlowOperationRepeater {
             return
         }
         
-        self.operation.performWithCompletionHandler(self.performOperation)
+        self.operation.perform(completionHandler: self.performOperation)
     }
 }
 
@@ -356,13 +356,13 @@ private class FlowOperationSequencePerformer: FlowOperation {
         self.operationSequence = operationSequence
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         if self.operationSequence.operations.isEmpty {
             return completionHandler()
         }
         
-        self.operationSequence.operations.removeFirst().performWithCompletionHandler({
-            self.performWithCompletionHandler(completionHandler)
+        self.operationSequence.operations.removeFirst().perform(completionHandler: {
+            self.perform(completionHandler: completionHandler)
         })
     }
 }
@@ -374,7 +374,7 @@ private class FlowOperationGroupPerformer: FlowOperation {
         self.operationGroup = operationGroup
     }
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         if self.operationGroup.operations.isEmpty {
             return completionHandler()
         }
@@ -382,7 +382,7 @@ private class FlowOperationGroupPerformer: FlowOperation {
         var operationsLeft = self.operationGroup.operations.count
         
         for operation in self.operationGroup.operations {
-            operation.performWithCompletionHandler({
+            operation.perform(completionHandler: {
                 operationsLeft -= 1
                 
                 if operationsLeft == 0 {
@@ -397,7 +397,7 @@ private class FlowOperationQueueObserverWrapper {
     weak var observer: FlowOperationQueueObserver? {
         willSet {
             if let observer = self.observer where newValue == nil {
-                self.queue?.removeObserver(observer)
+                self.queue?.remove(observer: observer)
             }
         }
     }

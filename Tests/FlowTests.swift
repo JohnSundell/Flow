@@ -12,7 +12,7 @@ class FlowTests: XCTestCase {
             closureCalled = true
         })
         
-        operation.performWithCompletionHandler({
+        operation.perform(completionHandler: {
             completionHandlerCalled = true
         })
         
@@ -29,7 +29,7 @@ class FlowTests: XCTestCase {
             $0()
         })
         
-        operation.performWithCompletionHandler({
+        operation.perform(completionHandler: {
             completionHandlerCalled = true
         })
         
@@ -40,14 +40,14 @@ class FlowTests: XCTestCase {
     func testDelayOperation() {
         let startTimestamp = NSDate().timeIntervalSince1970
         let delay = NSTimeInterval(1)
-        let expectation = self.expectationWithDescription("delayOperation")
+        let expectation = self.expectation(withDescription: "delayOperation")
         
         let operation = FlowDelayOperation(delay: delay)
-        operation.performWithCompletionHandler({
+        operation.perform(completionHandler: {
             expectation.fulfill()
         })
         
-        self.waitForExpectationsWithTimeout(delay + 0.5, handler: {
+        self.waitForExpectations(withTimeout: delay + 0.5, handler: {
             XCTAssertNil($0)
             
             let endTimestamp = NSDate().timeIntervalSince1970
@@ -73,7 +73,7 @@ class FlowTests: XCTestCase {
         var completionHandlerCalled = false
         
         let sequence = FlowOperationSequence(operations: [firstOperation, secondOperation, thirdOperation])
-        sequence.performWithCompletionHandler({
+        sequence.perform(completionHandler: {
             completionHandlerCalled = true
         })
         
@@ -85,7 +85,7 @@ class FlowTests: XCTestCase {
         let originalOperation = FlowOperationMock()
         
         var sequence = FlowOperationSequence(operation: originalOperation)
-        sequence.performWithCompletionHandler({})
+        sequence.perform(completionHandler: {})
         
         var addedOperationPerformed = false
         
@@ -93,11 +93,11 @@ class FlowTests: XCTestCase {
             addedOperationPerformed = true
         })
         
-        sequence.addOperation(addedOperation)
+        sequence.add(operation: addedOperation)
         originalOperation.complete()
         XCTAssertFalse(addedOperationPerformed)
         
-        sequence.performWithCompletionHandler({})
+        sequence.perform(completionHandler: {})
         originalOperation.complete()
         XCTAssertTrue(addedOperationPerformed)
     }
@@ -109,7 +109,7 @@ class FlowTests: XCTestCase {
         
         var completionHandlerCalled = false
         
-        group.performWithCompletionHandler({
+        group.perform(completionHandler: {
             completionHandlerCalled = true
         })
         
@@ -127,7 +127,7 @@ class FlowTests: XCTestCase {
         let originalOperation = FlowOperationMock()
         
         var group = FlowOperationGroup(operation: originalOperation)
-        group.performWithCompletionHandler({})
+        group.perform(completionHandler: {})
         
         var addedOperationPerformed = false
         
@@ -135,11 +135,11 @@ class FlowTests: XCTestCase {
             addedOperationPerformed = true
         })
         
-        group.addOperation(addedOperation)
+        group.add(operation: addedOperation)
         originalOperation.complete()
         XCTAssertFalse(addedOperationPerformed)
         
-        group.performWithCompletionHandler({})
+        group.perform(completionHandler: {})
         originalOperation.complete()
         XCTAssertTrue(addedOperationPerformed)
     }
@@ -162,8 +162,8 @@ class FlowTests: XCTestCase {
         
         let blockingOperation = FlowOperationMock()
         
-        queue.addOperation(blockingOperation)
-        queue.addOperation(queuedOperation)
+        queue.add(operation: blockingOperation)
+        queue.add(operation: queuedOperation)
         
         XCTAssertFalse(queuedOperationPerformed)
         
@@ -177,21 +177,21 @@ class FlowTests: XCTestCase {
         let observer = FlowOperationQueueObserverMock()
         
         let queue = FlowOperationQueue(operation: operation)
-        queue.addObserver(observer)
+        queue.add(observer: observer)
         
         operation.complete()
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 1)
         
-        queue.addOperation(operation)
+        queue.add(operation: operation)
         XCTAssertEqual(observer.startedOperations.count, 1)
         XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
         
         operation.complete()
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
         
-        queue.removeObserver(observer)
+        queue.remove(observer: observer)
         
-        queue.addOperation(operation)
+        queue.add(operation: operation)
         XCTAssertEqual(observer.startedOperations.count, 1)
         XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
         
@@ -222,10 +222,10 @@ class FlowTests: XCTestCase {
     }
     
     func testOperationRepeaterWithInterval() {
-        let expectation = self.expectationWithDescription("repeater-interval")
+        let expectation = self.expectation(withDescription: "repeater-interval")
         
         let delayOperation = FlowDelayOperation(delay: 1.1)
-        delayOperation.performWithCompletionHandler({
+        delayOperation.perform(completionHandler: {
             expectation.fulfill()
         })
         
@@ -238,7 +238,7 @@ class FlowTests: XCTestCase {
         let repeater = FlowOperationRepeater(operation: operation, interval: 0.25)
         repeater.start()
         
-        self.waitForExpectationsWithTimeout(5, handler: {
+        self.waitForExpectations(withTimeout: 5, handler: {
             XCTAssertNil($0)
             XCTAssertEqual(repeatCount, 4)
         })
@@ -250,7 +250,7 @@ class FlowTests: XCTestCase {
         let operationC = FlowOperationMock()
         
         var collection = FlowOperationGroup()
-        collection.addOperations([operationA, operationB, operationC])
+        collection.add(operations: [operationA, operationB, operationC])
         collection.perform()
         
         XCTAssertTrue(operationA.started)
@@ -265,7 +265,7 @@ private class FlowOperationMock: FlowOperation {
     var started = false
     var completionHandler: (() -> Void)?
     
-    func performWithCompletionHandler(completionHandler: () -> Void) {
+    func perform(completionHandler: () -> Void) {
         self.started = true
         self.completionHandler = completionHandler
     }
@@ -283,11 +283,11 @@ private class FlowOperationQueueObserverMock: FlowOperationQueueObserver {
     var startedOperations = [FlowOperation]()
     var numberOfTimesQueueBecameEmpty = 0
     
-    func operationQueue(queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {
+    private func operationQueue(_ queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {
         self.startedOperations.append(operation)
     }
     
-    func operationQueueDidBecomeEmpty(queue: FlowOperationQueue) {
+    private func operationQueueDidBecomeEmpty(_ queue: FlowOperationQueue) {
         self.numberOfTimesQueueBecameEmpty += 1
     }
 }
