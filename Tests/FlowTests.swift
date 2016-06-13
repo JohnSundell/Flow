@@ -39,7 +39,7 @@ class FlowTests: XCTestCase {
     
     func testDelayOperation() {
         let startTimestamp = NSDate().timeIntervalSince1970
-        let delay = NSTimeInterval(1)
+        let delay = TimeInterval(1)
         let expectation = self.expectation(withDescription: "delayOperation")
         
         let operation = FlowDelayOperation(delay: delay)
@@ -240,7 +240,7 @@ class FlowTests: XCTestCase {
         
         self.waitForExpectations(withTimeout: 5, handler: {
             XCTAssertNil($0)
-            XCTAssertEqual(repeatCount, 4)
+            XCTAssertEqual(repeatCount, 5)
         })
     }
     

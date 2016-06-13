@@ -128,16 +128,15 @@ public class FlowAsyncClosureOperation: FlowOperation {
  *  certain operations to be delayed within a sequence.
  */
 public class FlowDelayOperation: FlowOperation {
-    private let delay: NSTimeInterval
+    private let delay: TimeInterval
     
     /// Initialize an instance with a delay in seconds
-    public init(delay: NSTimeInterval) {
+    public init(delay: TimeInterval) {
         self.delay = delay
     }
     
     public func perform(completionHandler: () -> Void) {
-        let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(self.delay * Double(NSEC_PER_SEC)))
-        dispatch_after(delayTime, dispatch_get_main_queue(), completionHandler)
+        DispatchQueue.main.after(when: DispatchTime.now() + self.delay, execute: completionHandler)
     }
 }
 
@@ -306,7 +305,7 @@ public class FlowOperationRepeater {
     private let operation: FlowOperation
     
     /// Initialize an instance with an operation to repeat, and optionally an interval between repeats
-    public init(operation: FlowOperation, interval: NSTimeInterval = 0) {
+    public init(operation: FlowOperation, interval: TimeInterval = 0) {
         if interval > 0 {
             let delayOperation = FlowDelayOperation(delay: interval)
             self.operation = FlowOperationSequence(operations: [operation, delayOperation])
@@ -319,7 +318,7 @@ public class FlowOperationRepeater {
     
     /// Initialize an instance with an array of operations, and optionally an interval between repeats.
     /// The interval will be added at the end of the sequence formed from the array of operations.
-    public convenience init(operations: [FlowOperation], interval: NSTimeInterval = 0) {
+    public convenience init(operations: [FlowOperation], interval: TimeInterval = 0) {
         self.init(operation: FlowOperationSequence(operations: operations), interval: interval)
     }
     
