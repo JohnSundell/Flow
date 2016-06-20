@@ -199,6 +199,29 @@ class FlowTests: XCTestCase {
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
     }
     
+    func testPausingOperationQueue() {
+        let queue = FlowOperationQueue()
+        queue.paused = true
+        
+        let operation = FlowOperationMock()
+        queue.add(operation: operation)
+        XCTAssertFalse(operation.started)
+        
+        queue.paused = false
+        XCTAssertTrue(operation.started)
+    }
+    
+    func testUnpausingEmptyOperationQueueDoesNotNotifyObservers() {
+        let observer = FlowOperationQueueObserverMock()
+        
+        let queue = FlowOperationQueue()
+        queue.paused = true
+        queue.add(observer: observer)
+        
+        queue.paused = false
+        XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 0)
+    }
+    
     func testOperationRepeater() {
         var repeatCount = 0
         

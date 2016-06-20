@@ -210,21 +210,50 @@ public extension FlowOperationQueueObserver {
  *  Flow operation collection that enqueues operations and executes them once idle
  *
  *  This collection cannot be performed, rather it auto-performs any added operations once
- *  any currently performed operation has finished, or immediately if it's idle.
+ *  any currently performed operation has finished, or immediately if it's idle (as long as
+ *  it's not paused).
  *
  *  You can also add observers to the operation queue, to get notified when the queue
  *  becomes empty; see `FlowOperationQueueObserver` for more information.
  */
 public final class FlowOperationQueue: FlowOperationCollection {
+    /// Whether the queue is currently paused. When paused, no new operations will be performed
+    public var paused: Bool {
+        didSet {
+            if oldValue && !self.paused && !self.isPerformingOperation && !self.operations.isEmpty {
+                self.performFirstOperation()
+            }
+        }
+    }
+    
     private var operations: [FlowOperation]
     private var isPerformingOperation: Bool
     private var observers: [ObjectIdentifier : FlowOperationQueueObserverWrapper]
     
-    public init(operations: [FlowOperation] = []) {
+    /**
+     *  Create an operation queue with an array of operations and whether the queue should be paused
+     *
+     *  - parameter operations: The operations the queue should contain
+     *  - parameter paused: Whether the queue should start out as paused, or start immediately
+     */
+    public init(operations: [FlowOperation] = [], paused: Bool) {
+        self.paused = paused
         self.operations = operations
         self.isPerformingOperation = false
         self.observers = [:]
-        self.performFirstOperation()
+        
+        if !operations.isEmpty {
+            self.performFirstOperation()
+        }
+    }
+    
+    /**
+     *  Create an operation queue with an array of operations, or just as an empty queue
+     *
+     *  - parameter operations: The operations the queue should contain
+     */
+    public convenience init(operations: [FlowOperation] = []) {
+        self.init(operations: operations, paused: false)
     }
     
     public func add(operation: FlowOperation) {
@@ -262,7 +291,7 @@ public final class FlowOperationQueue: FlowOperationCollection {
     }
     
     private func performFirstOperation() {
-        if self.isPerformingOperation  {
+        if self.isPerformingOperation {
             return
         }
         
@@ -271,6 +300,10 @@ public final class FlowOperationQueue: FlowOperationCollection {
                 observerWrapper.observer?.operationQueueDidBecomeEmpty(self)
             }
             
+            return
+        }
+        
+        if self.paused {
             return
         }
         
