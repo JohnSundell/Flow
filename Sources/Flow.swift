@@ -37,7 +37,7 @@ import Foundation
  */
 public protocol FlowOperation {
     /// Perform the operation with a completion handler
-    func perform(completionHandler: () -> Void)
+    func perform(completionHandler: @escaping () -> Void)
 }
 
 /// Extension adding convenience APIs to objects conforming to `FlowOperation`
@@ -87,11 +87,11 @@ public class FlowClosureOperation: FlowOperation {
     private let closure: () -> Void
     
     /// Initialize an instance with a closure that the operation should perform
-    public init(closure: () -> Void) {
+    public init(closure: @escaping () -> Void) {
         self.closure = closure
     }
     
-    public func perform(completionHandler: () -> Void) {
+    public func perform(completionHandler: @escaping () -> Void) {
         self.closure()
         completionHandler()
     }
@@ -108,14 +108,14 @@ public class FlowClosureOperation: FlowOperation {
  *  See `FlowClosureOperation` for its synchronous counterpart.
  */
 public class FlowAsyncClosureOperation: FlowOperation {
-    private let closure: (() -> Void) -> Void
+    private let closure: (@escaping () -> Void) -> Void
     
     /// Initialize an instance with a closure that the operation should perform
-    public init(closure: (() -> Void) -> Void) {
+    public init(closure: @escaping (@escaping () -> Void) -> Void) {
         self.closure = closure
     }
     
-    public func perform(completionHandler: () -> Void) {
+    public func perform(completionHandler: @escaping () -> Void) {
         self.closure(completionHandler)
     }
 }
@@ -135,8 +135,9 @@ public class FlowDelayOperation: FlowOperation {
         self.delay = delay
     }
     
-    public func perform(completionHandler: () -> Void) {
-        DispatchQueue.main.after(when: DispatchTime.now() + self.delay, execute: completionHandler)
+    public func perform(completionHandler: @escaping () -> Void) {
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + self.delay,
+                                      execute: completionHandler)
     }
 }
 
@@ -151,7 +152,7 @@ public class FlowDelayOperation: FlowOperation {
  *  reflected in the instance that is currently performing.
  */
 public struct FlowOperationSequence: FlowOperation, FlowOperationCollection {
-    private var operations: [FlowOperation]
+    fileprivate var operations: [FlowOperation]
     
     public init(operations: [FlowOperation] = []) {
         self.operations = operations
@@ -161,7 +162,7 @@ public struct FlowOperationSequence: FlowOperation, FlowOperationCollection {
         self.operations.append(operation)
     }
     
-    public func perform(completionHandler: () -> Void) {
+    public func perform(completionHandler: @escaping () -> Void) {
         FlowOperationSequencePerformer(operationSequence: self).perform(completionHandler: completionHandler)
     }
 }
@@ -177,7 +178,7 @@ public struct FlowOperationSequence: FlowOperation, FlowOperationCollection {
  *  reflected in the instance that is currently performing.
  */
 public struct FlowOperationGroup: FlowOperation, FlowOperationCollection {
-    private var operations: [FlowOperation]
+    fileprivate private(set) var operations: [FlowOperation]
     
     public init(operations: [FlowOperation] = []) {
         self.operations = operations
@@ -187,7 +188,7 @@ public struct FlowOperationGroup: FlowOperation, FlowOperationCollection {
         self.operations.append(operation)
     }
     
-    public func perform(completionHandler: () -> Void) {
+    public func perform(completionHandler: @escaping () -> Void) {
         FlowOperationGroupPerformer(operationGroup: self).perform(completionHandler: completionHandler)
     }
 }
@@ -262,7 +263,7 @@ public final class FlowOperationQueue: FlowOperationCollection {
     }
     
     /// Add an operation to the queue, with a completion handler that gets called once it has finished
-    public func add(operation: FlowOperation, completionHandler: () -> Void) {
+    public func add(operation: FlowOperation, completionHandler: @escaping () -> Void) {
         let wrapper = FlowAsyncClosureOperation(closure: {
             let internalCompletionHandler = $0
             
@@ -388,7 +389,7 @@ private class FlowOperationSequencePerformer: FlowOperation {
         self.operationSequence = operationSequence
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         if self.operationSequence.operations.isEmpty {
             return completionHandler()
         }
@@ -406,7 +407,7 @@ private class FlowOperationGroupPerformer: FlowOperation {
         self.operationGroup = operationGroup
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         if self.operationGroup.operations.isEmpty {
             return completionHandler()
         }
@@ -428,7 +429,7 @@ private class FlowOperationGroupPerformer: FlowOperation {
 private class FlowOperationQueueObserverWrapper {
     weak var observer: FlowOperationQueueObserver? {
         willSet {
-            if let observer = self.observer where newValue == nil {
+            if let observer = self.observer, newValue == nil {
                 self.queue?.remove(observer: observer)
             }
         }

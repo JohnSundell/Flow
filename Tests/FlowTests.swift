@@ -40,14 +40,14 @@ class FlowTests: XCTestCase {
     func testDelayOperation() {
         let startTimestamp = NSDate().timeIntervalSince1970
         let delay = TimeInterval(1)
-        let expectation = self.expectation(withDescription: "delayOperation")
+        let expectation = self.expectation(description: "delayOperation")
         
         let operation = FlowDelayOperation(delay: delay)
         operation.perform(completionHandler: {
             expectation.fulfill()
         })
         
-        self.waitForExpectations(withTimeout: delay + 0.5, handler: {
+        self.waitForExpectations(timeout: delay + 0.5, handler: {
             XCTAssertNil($0)
             
             let endTimestamp = NSDate().timeIntervalSince1970
@@ -184,7 +184,9 @@ class FlowTests: XCTestCase {
         
         queue.add(operation: operation)
         XCTAssertEqual(observer.startedOperations.count, 1)
-        XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
+        
+        let startedOperationA = observer.startedOperations.first as! FlowOperationMock
+        XCTAssertEqual(operation.identifier, startedOperationA.identifier)
         
         operation.complete()
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
@@ -193,7 +195,9 @@ class FlowTests: XCTestCase {
         
         queue.add(operation: operation)
         XCTAssertEqual(observer.startedOperations.count, 1)
-        XCTAssertTrue(observer.startedOperations.first as? AnyObject === operation)
+        
+        let startedOperationB = observer.startedOperations.first as! FlowOperationMock
+        XCTAssertEqual(operation.identifier, startedOperationB.identifier)
         
         operation.complete()
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 2)
@@ -245,7 +249,7 @@ class FlowTests: XCTestCase {
     }
     
     func testOperationRepeaterWithInterval() {
-        let expectation = self.expectation(withDescription: "repeater-interval")
+        let expectation = self.expectation(description: "repeater-interval")
         
         let delayOperation = FlowDelayOperation(delay: 1.1)
         delayOperation.perform(completionHandler: {
@@ -261,7 +265,7 @@ class FlowTests: XCTestCase {
         let repeater = FlowOperationRepeater(operation: operation, interval: 0.25)
         repeater.start()
         
-        self.waitForExpectations(withTimeout: 5, handler: {
+        self.waitForExpectations(timeout: 5, handler: {
             XCTAssertNil($0)
             XCTAssertEqual(repeatCount, 5)
         })
@@ -285,10 +289,11 @@ class FlowTests: XCTestCase {
 // MARK: - Mocks
 
 private class FlowOperationMock: FlowOperation {
+    let identifier = UUID()
     var started = false
     var completionHandler: (() -> Void)?
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         self.started = true
         self.completionHandler = completionHandler
     }
@@ -306,11 +311,11 @@ private class FlowOperationQueueObserverMock: FlowOperationQueueObserver {
     var startedOperations = [FlowOperation]()
     var numberOfTimesQueueBecameEmpty = 0
     
-    private func operationQueue(_ queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {
+    func operationQueue(_ queue: FlowOperationQueue, willStartPerformingOperation operation: FlowOperation) {
         self.startedOperations.append(operation)
     }
     
-    private func operationQueueDidBecomeEmpty(_ queue: FlowOperationQueue) {
+    func operationQueueDidBecomeEmpty(_ queue: FlowOperationQueue) {
         self.numberOfTimesQueueBecameEmpty += 1
     }
 }
