@@ -52,7 +52,7 @@ public extension FlowOperation {
  *  Protocol used to define a collection of Flow operations
  *
  *  A collection forms a group out of a number of operations, that can either be
- *  exceuted in parallel or in sequence. Common for all collections is that their
+ *  exceuted in parallel or in sequence. Common for all collections is their
  *  initializer and that they can be mutated by adding new operations.
  */
 public protocol FlowOperationCollection {
