@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "FlowOperations"
-  s.version      = "1.1"
+  s.version      = "2.0"
   s.summary      = "Operation Oriented Programming in Swift"
   s.description  = <<-DESC
      A lightweight Swift library for doing operation oriented programming. Easily define your own, atomic operations, and/or use an exensive library of ready-to-use operations that can be grouped, sequenced, queued and repeated.
@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = "8.0"
   s.osx.deployment_target = "10.10"
   s.watchos.deployment_target = "2.0"
-  s.source       = { :git => "https://github.com/JohnSundell/Flow.git", :tag => "1.1" }
+  s.source       = { :git => "https://github.com/JohnSundell/Flow.git", :tag => "2.0" }
   s.source_files  = "Sources/Flow.swift"
   s.framework  = "Foundation"
 end
