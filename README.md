@@ -1,5 +1,9 @@
 # Flow
 
+![Travis](https://img.shields.io/travis/JohnSundell/Flow/master.svg)
+![CocoaPods](https://img.shields.io/cocoapods/v/FlowOperations.svg)
+[![Carthage](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
+
 Flow is a lightweight Swift library for doing operation oriented programming. It enables you to easily define your own, atomic operations, and also contains an exensive library of ready-to-use operations that can be grouped, sequenced, queued and repeated.
 
 ## Operations
@@ -175,6 +179,17 @@ Used to repeat operations, optionally using an interval in between repeats.
 ## How is this different from NSOperations?
 
 `NSOperations` are awesome - and are definetly one of the main sources of inspiration for Flow. However, `NSOperations` are quite heavyweight and can potentially take a long time to implement. Flow was designed to have the power of `NSOperations`, but be a lot easier to use. It’s also written 100% using Swift - making it ideal for Swift-based projects.
+
+## Compatibility
+
+Flow supports all current Apple platforms with the following minimum versions:
+
+- iOS 8
+- macOS 10.11
+- watchOS 2
+- tvOS 9
+
+The current version of Flow supports Swift 3. If you need Swift 2 support, either use [version 1.1](https://github.com/JohnSundell/Flow/releases/tag/1.1), or the [`swift 2` branch](https://github.com/JohnSundell/Flow/tree/swift2).
 
 ## Installation
 
