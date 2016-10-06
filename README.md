@@ -65,7 +65,7 @@ class PlayerMoveOperation: FlowOperation {
         self.destination = destination
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         self.player.moveTo(self.destination, completionHandler: completionHandler)
     }
 }
@@ -78,7 +78,7 @@ class PlayerAttackOperation: FlowOperation {
         self.player = player
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         self.player.performAttack(completionHandler)
     }
 }
@@ -91,7 +91,7 @@ class EnemyDestroyOperation: FlowOperation {
         self.enemy = enemy
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         self.enemy.destroy(completionHandler)
     }
 }
@@ -104,7 +104,7 @@ class PlayerVictoryOperation: FlowOperation {
         self.player = player
     }
     
-    func perform(completionHandler: () -> Void) {
+    func perform(completionHandler: @escaping () -> Void) {
         self.player.playVictoryAnimation()
         completionHandler()
     }
@@ -192,7 +192,7 @@ Clone the repo and drag the file `Flow.swift` into your Xcode project.
 
 **Swift Package Manager:**
 
-Add the line `.Package(url: "https://github.com/johnsundell/flow.git", majorVersion: 1)` to your `Package.swift`
+Add the line `.Package(url: "https://github.com/johnsundell/flow.git", majorVersion: 2)` to your `Package.swift`
 
 ## Hope you enjoy using Flow!
 
