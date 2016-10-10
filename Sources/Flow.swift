@@ -32,7 +32,7 @@ import Foundation
 /**
  *  Protocol used to define a Flow operation
  *
- *  An operation performs a task, that can be either asynchronous or asynchronous,
+ *  An operation performs a task, that can be either synchronous or asynchronous,
  *  and calls a completion handler once it has finished.
  */
 public protocol FlowOperation {
