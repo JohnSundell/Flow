@@ -226,6 +226,18 @@ class FlowTests: XCTestCase {
         XCTAssertEqual(observer.numberOfTimesQueueBecameEmpty, 0)
     }
     
+    func testOperationQueueIsEmpty() {
+        let queue = FlowOperationQueue()
+        XCTAssertTrue(queue.isEmpty)
+        
+        let operation = FlowOperationMock()
+        queue.add(operation: operation)
+        XCTAssertFalse(queue.isEmpty)
+        
+        operation.complete()
+        XCTAssertTrue(queue.isEmpty)
+    }
+    
     func testOperationRepeater() {
         var repeatCount = 0
         

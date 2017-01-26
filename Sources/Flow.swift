@@ -227,6 +227,11 @@ public final class FlowOperationQueue: FlowOperationCollection {
         }
     }
     
+    /// Whether the queue is currently empty (including any ongoing operation)
+    public var isEmpty: Bool {
+        return operations.isEmpty && !isPerformingOperation
+    }
+    
     private var operations: [FlowOperation]
     private var isPerformingOperation: Bool
     private var observers: [ObjectIdentifier : FlowOperationQueueObserverWrapper]
